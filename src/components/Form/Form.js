@@ -1,26 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useStyles from "./styles";
 import { TextField, Button, Typography, Paper } from "@material-ui/core";
 import FileBase from "react-file-base64";
-import { useDispatch } from "react-redux";
-import { createPost } from "../../actions/posts";
+import { useDispatch, useSelector } from "react-redux";
+import { createPost, updatePost } from "../../actions/posts";
 
-const Form = () => {
+//get the current id
+
+const Form = ({ currentId, setCurrentId }) => {
   //sets original state of Form Component
   const [postData, setPostData] = useState({
     creator: "",
     title: "",
-    message: "",
+    ingredients: "",
+    directions: "",
+    tags: "",
     selectedFile: "",
   });
+  const post = useSelector((state) =>
+    currentId ? state.posts.find((p) => p._id === currentId) : null
+  );
   const classes = useStyles();
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    if (post) setPostData(post);
+  }, [post]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(createPost(postData));
+
+    if (currentId) {
+      dispatch(updatePost(currentId, postData));
+    } else {
+      dispatch(createPost(postData));
+    }
+    clear();
   };
-  const clear = () => {};
+  const clear = () => {
+    setCurrentId(0);
+    setPostData({
+      creator: "",
+      title: "",
+      ingredients: "",
+      directions: "",
+      tags: "",
+      selectedFile: "",
+    });
+  };
 
   return (
     <Paper className={classes.paper}>
@@ -30,7 +57,9 @@ const Form = () => {
         className={`${classes.root} ${classes.form}`}
         onSubmit={handleSubmit}
       >
-        <Typography variant="h6">Creating a Recipe</Typography>
+        <Typography variant="h6">
+          {currentId ? "Editing" : "Creating"} a Recipe
+        </Typography>
         <TextField
           name="Creator"
           variant="outlined"
@@ -50,13 +79,23 @@ const Form = () => {
           onChange={(e) => setPostData({ ...postData, title: e.target.value })}
         ></TextField>
         <TextField
-          name="Message"
+          name="Ingredients"
           variant="outlined"
-          label="Message"
+          label="Ingredients"
           fullWidth
-          value={postData.message}
+          value={postData.ingredients}
           onChange={(e) =>
-            setPostData({ ...postData, message: e.target.value })
+            setPostData({ ...postData, ingredients: e.target.value })
+          }
+        ></TextField>
+        <TextField
+          name="Directions"
+          variant="outlined"
+          label="Directions"
+          fullWidth
+          value={postData.directions}
+          onChange={(e) =>
+            setPostData({ ...postData, directions: e.target.value })
           }
         ></TextField>
         <TextField
@@ -65,7 +104,9 @@ const Form = () => {
           label="Tags"
           fullWidth
           value={postData.tags}
-          onChange={(e) => setPostData({ ...postData, tags: e.target.value })}
+          onChange={(e) =>
+            setPostData({ ...postData, tags: e.target.value.split(",") })
+          }
         ></TextField>
 
         <div className={classes.fileInput}>
